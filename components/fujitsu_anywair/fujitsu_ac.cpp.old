@@ -1,0 +1,7 @@
+#include "fujitsu_ac.h"
+
+namespace esphome {
+namespace fujitsu_ac {
+
+}  // namespace fujitsu_ac
+}  // namespace esphome

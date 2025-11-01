@@ -1,0 +1,11 @@
+#pragma once
+
+namespace esphome {
+namespace fujitsu_ac {
+
+class FujitsuACClimate : public climate::Climate, public Component {
+
+};
+
+}  // namespace fujitsu_ac
+}  // namespace esphome
