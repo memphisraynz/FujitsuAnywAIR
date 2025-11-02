@@ -1,4 +1,4 @@
-#include "fujitsu_ac.h"
+#include "fujitsu_anywair.h"
 
 namespace esphome {
 namespace fujitsu_anywair {
