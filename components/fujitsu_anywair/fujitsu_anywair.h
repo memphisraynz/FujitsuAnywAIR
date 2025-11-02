@@ -21,6 +21,13 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   uart::UARTComponent *uart_{nullptr};
   bool supports_cool_{true};
   bool supports_heat_{true};
+
+  // Communication helpers
+  void write_bytes(const uint8_t* data, size_t length);
+  int read_bytes(uint8_t* buffer, size_t length, int timeout_ms);
+
+  bool send_command(const std::vector<uint8_t> &command);
+  bool read_response(std::vector<uint8_t> &response, int timeout_ms = 1000);
 };
 
 }  // namespace fujitsu_anywair
