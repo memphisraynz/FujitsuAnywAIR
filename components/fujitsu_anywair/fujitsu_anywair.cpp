@@ -1,4 +1,5 @@
 #include "fujitsu_anywair.h"
+#include "esphome/core/log.h"
 
 static const char *TAG = "fujitsu_anywair.climate";
 
@@ -61,10 +62,13 @@ void FujitsuAnywAIRClimate::write_bytes(const uint8_t* data, size_t length) {
 
 int FujitsuAnywAIRClimate::read_bytes(uint8_t* buffer, size_t length, int timeout_ms) {
   int read = 0;
-  int64_t start = millis64();
-  while (read < static_cast<int>(length) && (millis64() - start) < timeout_ms) {
+  uint32_t start = esp_log_uptime_millis();  // uptime in ms since boot
+  while (read < static_cast<int>(length) && (esp_log_uptime_millis() - start) < static_cast<uint32_t>(timeout_ms)) {
     if (uart_->available()) {
-      buffer[read++] = uart_->read_byte();
+      uint8_t b;
+      if (uart_->read_byte(&b)) {   // read_byte takes pointer and returns bool success
+        buffer[read++] = b;
+      }
     }
   }
   return read;
