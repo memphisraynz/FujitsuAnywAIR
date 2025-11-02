@@ -50,7 +50,7 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   if (call.get_target_temperature()) {
     command_buffer.push_back(clamp_temperature(*call.get_target_temperature()));
   } else {
-    command_buffer.push_back(0);  // Or default
+    command_buffer.push_back(0);
   }
 
   // Fan speed
