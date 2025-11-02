@@ -11,6 +11,8 @@ namespace fujitsu_anywair {
 class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, public Component {
  public:
   void setup() override;
+  void loop();
+
   void control(const climate::ClimateCall &call) override;
   climate::ClimateTraits traits() override;
 
