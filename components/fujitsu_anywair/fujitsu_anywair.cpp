@@ -6,6 +6,12 @@ static const char *TAG = "fujitsu_anywair.climate";
 namespace esphome {
 namespace fujitsu_anywair {
 
+static uint8_t clamp_temperature(float temp) {
+  if (temp < 16.0f) return 16;
+  if (temp > 30.0f) return 30;
+  return static_cast<uint8_t>(temp);
+}
+
 void FujitsuAnywAIRClimate::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Fujitsu AC Climate component");
 }
