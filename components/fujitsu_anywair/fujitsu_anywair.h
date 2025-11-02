@@ -22,9 +22,11 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   void set_supports_heat(bool supports_heat) { supports_heat_ = supports_heat; }
 
  protected:
+  void parse_message(const uint8_t *buf, size_t len);
   uart::UARTComponent *uart_{nullptr};
   bool supports_cool_{true};
   bool supports_heat_{true};
+  bool validate_message(const uint8_t *buf, size_t len);
 
   // Communication helpers
   void write_bytes(const uint8_t* data, size_t length);
