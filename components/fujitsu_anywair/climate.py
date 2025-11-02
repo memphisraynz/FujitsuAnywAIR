@@ -11,6 +11,9 @@ from esphome.const import (
     CONF_UART_ID,
     CONF_SUPPORTS_COOL,
     CONF_SUPPORTS_HEAT,
+    CONF_SUPPORTED_MODES,
+    CONF_SUPPORTED_PRESETS,
+    CONF_SUPPORTED_SWING_MODES,
 )
 from esphome.core import coroutine
 
@@ -21,6 +24,41 @@ AUTO_LOAD = ["uart"]
 fujitsu_anywair_ns = cg.esphome_ns.namespace("fujitsu_anywair")
 FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component, uart.UARTDevice)
 
+ALLOWED_CLIMATE_MODES = {
+    "HEAT_COOL": ClimateMode.CLIMATE_MODE_HEAT_COOL,
+    "COOL": ClimateMode.CLIMATE_MODE_COOL,
+    "HEAT": ClimateMode.CLIMATE_MODE_HEAT,
+    "DRY": ClimateMode.CLIMATE_MODE_DRY,
+    "FAN_ONLY": ClimateMode.CLIMATE_MODE_FAN_ONLY,
+}
+
+ALLOWED_CLIMATE_PRESETS = {
+    "ECO": ClimatePreset.CLIMATE_PRESET_ECO,
+    "BOOST": ClimatePreset.CLIMATE_PRESET_BOOST,
+    "SLEEP": ClimatePreset.CLIMATE_PRESET_SLEEP,
+}
+
+ALLOWED_CLIMATE_SWING_MODES = {
+    "BOTH": ClimateSwingMode.CLIMATE_SWING_BOTH,
+    "VERTICAL": ClimateSwingMode.CLIMATE_SWING_VERTICAL,
+    "HORIZONTAL": ClimateSwingMode.CLIMATE_SWING_HORIZONTAL,
+}
+
+CUSTOM_FAN_MODES = {
+    "SILENT": Capabilities.SILENT,
+    "TURBO": Capabilities.TURBO,
+}
+
+CUSTOM_PRESETS = {
+    "FREEZE_PROTECTION": Capabilities.FREEZE_PROTECTION,
+}
+
+validate_modes = cv.enum(ALLOWED_CLIMATE_MODES, upper=True)
+validate_presets = cv.enum(ALLOWED_CLIMATE_PRESETS, upper=True)
+validate_swing_modes = cv.enum(ALLOWED_CLIMATE_SWING_MODES, upper=True)
+validate_custom_fan_modes = cv.enum(CUSTOM_FAN_MODES, upper=True)
+validate_custom_presets = cv.enum(CUSTOM_PRESETS, upper=True)
+
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)
     
@@ -29,6 +67,15 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(): cv.declare_id(FujitsuAnywAIRClimate),
             cv.Optional(CONF_SUPPORTS_COOL, default=True): cv.boolean,
             cv.Optional(CONF_SUPPORTS_HEAT, default=True): cv.boolean,
+            cv.Optional(CONF_SUPPORTED_MODES): cv.ensure_list(validate_modes),
+            cv.Optional(CONF_SUPPORTED_SWING_MODES): cv.ensure_list(
+                validate_swing_modes
+            ),
+            cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
+            cv.Optional(CONF_CUSTOM_PRESETS): cv.ensure_list(validate_custom_presets),
+            cv.Optional(CONF_CUSTOM_FAN_MODES): cv.ensure_list(
+                validate_custom_fan_modes
+            ),
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -42,6 +89,16 @@ async def to_code(config):
 
     cg.add(var.set_supports_cool(config[CONF_SUPPORTS_COOL]))
     cg.add(var.set_supports_heat(config[CONF_SUPPORTS_HEAT]))
+    if CONF_SUPPORTED_MODES in config:
+        cg.add(var.set_supported_modes(config[CONF_SUPPORTED_MODES]))
+    if CONF_SUPPORTED_SWING_MODES in config:
+        cg.add(var.set_supported_swing_modes(config[CONF_SUPPORTED_SWING_MODES]))
+    if CONF_SUPPORTED_PRESETS in config:
+        cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
+    if CONF_CUSTOM_PRESETS in config:
+        cg.add(var.set_custom_presets(config[CONF_CUSTOM_PRESETS]))
+    if CONF_CUSTOM_FAN_MODES in config:
+        cg.add(var.set_custom_fan_modes(config[CONF_CUSTOM_FAN_MODES]))
 
     uart_ = await cg.get_variable(config[CONF_UART_ID])
     cg.add(var.set_uart(uart_))
