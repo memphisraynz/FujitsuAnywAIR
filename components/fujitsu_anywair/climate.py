@@ -23,12 +23,12 @@ FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", clima
 
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)
+    
     .extend(
         {
             cv.GenerateID(): cv.declare_id(FujitsuAnywAIRClimate),
             cv.Optional(CONF_SUPPORTS_COOL, default=True): cv.boolean,
             cv.Optional(CONF_SUPPORTS_HEAT, default=True): cv.boolean,
-            cv.Optional(CONF_SENSOR): cv.use_id(sensor.Sensor),
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -39,10 +39,6 @@ async def to_code(config):
     var = await climate.new_climate(config)
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
-
-    if CONF_SENSOR in config:
-        sens = await cg.get_variable(config[CONF_SENSOR])
-        cg.add(var.set_sensor(sens))
 
     cg.add(var.set_supports_cool(config[CONF_SUPPORTS_COOL]))
     cg.add(var.set_supports_heat(config[CONF_SUPPORTS_HEAT]))
