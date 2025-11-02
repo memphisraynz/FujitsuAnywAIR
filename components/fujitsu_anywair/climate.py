@@ -3,13 +3,11 @@ import esphome.codegen as cg
 
 from esphome.components import (
     climate,
-    uart,
-    sensor
+    uart
 )
 from esphome.const import (
     CONF_ID,
     CONF_NAME,
-    CONF_SENSOR,
     CONF_UART_ID,
     CONF_SUPPORTS_COOL,
     CONF_SUPPORTS_HEAT,
@@ -17,11 +15,11 @@ from esphome.const import (
 from esphome.core import coroutine
 
 CODEOWNERS = ["@memphisraynz"]
-DEPENDENCIES = ["climate", "sensor"]
+DEPENDENCIES = ["climate"]
 AUTO_LOAD = ["uart"]
 
 fujitsu_anywair_ns = cg.esphome_ns.namespace("fujitsu_anywair")
-FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component)
+FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component, uart.UARTDevice)
 
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)

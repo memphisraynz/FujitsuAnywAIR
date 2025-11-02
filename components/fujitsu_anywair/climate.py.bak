@@ -20,8 +20,8 @@ CODEOWNERS = ["@memphisraynz"]
 DEPENDENCIES = ["climate", "sensor"]
 AUTO_LOAD = ["uart"]
 
-fujitsu_ac_ns = cg.esphome_ns.namespace("fujitsu_anywair")
-FujitsuAnywAIRClimate = fujitsu_ac_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component)
+fujitsu_anywair_ns = cg.esphome_ns.namespace("fujitsu_anywair")
+FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component, uart.UARTDevice)
 
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)
