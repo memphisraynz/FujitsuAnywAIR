@@ -2,6 +2,7 @@
 #include "esphome/core/log.h"
 
 static const char *TAG = "fujitsu_anywair.climate";
+static constexpr size_t kExpectedMsgLength = 20;
 
 namespace esphome {
 namespace fujitsu_anywair {
@@ -19,9 +20,8 @@ void FujitsuAnywAIRClimate::setup() {
 void FujitsuAnywAIRClimate::loop() {
   static uint8_t buffer[kExpectedMsgLength];
   static size_t buffer_pos = 0;
-  const size_t bufsize = sizeof(buffer);
 
-  while (uart_->available() && buffer_pos < bufsize) {
+  while (uart_->available() && buffer_pos < kExpectedMsgLength) {
     uint8_t byte;
     if (!uart_->read_byte(&byte)) {
       ESP_LOGE(TAG, "UART read error");
@@ -34,7 +34,7 @@ void FujitsuAnywAIRClimate::loop() {
         parse_message(buffer, buffer_pos);
         publish_state();
       } else {
-        ESP_LOGW(TAG, "Invalid Fujitsu message received");
+        ESP_LOGW(TAG, "Invalid message");
       }
       buffer_pos = 0;
     }
@@ -53,65 +53,32 @@ bool FujitsuAnywAIRClimate::validate_message(const uint8_t *buf, size_t len) {
 }
 
 void FujitsuAnywAIRClimate::parse_message(const uint8_t *buf, size_t len) {
-  // Example parsing, adjust offsets based on your protocol
+  // Example:
+  // Use class members - mode_, fan_mode_, current_temperature_
 
   using namespace esphome::fujitsu_anywair;
 
-  // Parse power (register or position example)
-  if (buf[5] == static_cast<uint8_t>(Power::On)) {
-    this->mode_ = climate::CLIMATE_MODE_HEAT;  // Example mapping
-  } else {
-    this->mode_ = climate::CLIMATE_MODE_OFF;
-  }
-
-  // Parse temperature (register or buffer offset)
-  float temp = static_cast<float>(buf[6]);
-  this->current_temperature = temp;
-
-  // Parse mode from buffer byte
+  // Map your protocol buffer bytes into class members
+  // e.g. convert byte to climate::ClimateMode and assign to mode_
   uint8_t mode_byte = buf[7];
-  Mode mode = static_cast<Mode>(mode_byte);
-  switch (mode) {
-    case Mode::Cool:
-      this->mode_ = climate::CLIMATE_MODE_COOL;
-      break;
-    case Mode::Dry:
-      this->mode_ = climate::CLIMATE_MODE_DRY;
-      break;
-    case Mode::Fan:
-      this->mode_ = climate::CLIMATE_MODE_FAN_ONLY;
-      break;
-    case Mode::Heat:
-      this->mode_ = climate::CLIMATE_MODE_HEAT;
-      break;
-    default:
-      this->mode_ = climate::CLIMATE_MODE_OFF;
-      break;
+  switch (mode_byte) {
+    case 0x01: mode_ = climate::CLIMATE_MODE_COOL; break;
+    case 0x02: mode_ = climate::CLIMATE_MODE_DRY; break;
+    // add other modes
+    default: mode_ = climate::CLIMATE_MODE_OFF; break;
   }
 
-  // Parse fan speed
+  current_temperature_ = static_cast<float>(buf[6]);
+
+  // Fan mode parse example:
   uint8_t fan_byte = buf[8];
-  FanSpeed fan = static_cast<FanSpeed>(fan_byte);
-  switch (fan) {
-    case FanSpeed::Auto:
-      this->fan_mode_ = climate::CLIMATE_FAN_AUTO;
-      break;
-    case FanSpeed::Quiet:
-    case FanSpeed::Low:
-      this->fan_mode_ = climate::CLIMATE_FAN_LOW;
-      break;
-    case FanSpeed::Medium:
-      this->fan_mode_ = climate::CLIMATE_FAN_MEDIUM;
-      break;
-    case FanSpeed::High:
-      this->fan_mode_ = climate::CLIMATE_FAN_HIGH;
-      break;
-    default:
-      this->fan_mode_ = climate::CLIMATE_FAN_AUTO;
-      break;
+  switch (fan_byte) {
+    case 0x00: fan_mode_ = climate::CLIMATE_FAN_AUTO; break;
+    case 0x01: fan_mode_ = climate::CLIMATE_FAN_LOW; break;
+    case 0x02: fan_mode_ = climate::CLIMATE_FAN_MEDIUM; break;
+    case 0x03: fan_mode_ = climate::CLIMATE_FAN_HIGH; break;
+    default: fan_mode_ = climate::CLIMATE_FAN_AUTO; break;
   }
-
-  // Parse swing modes similarly...
 }
 
 void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
@@ -227,8 +194,6 @@ climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
 
   return traits;
 }
-
-// Communication helper implementations:
 
 void FujitsuAnywAIRClimate::write_bytes(const uint8_t* data, size_t length) {
   for (size_t i = 0; i < length; i++) {
