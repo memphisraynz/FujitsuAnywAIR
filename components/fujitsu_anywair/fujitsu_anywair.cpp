@@ -20,17 +20,24 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
 
 climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
   auto traits = climate::ClimateTraits();
+
   traits.set_supports_current_temperature(true);
-  traits.set_supports_target_temperature(true);
+  // There is no set_supports_target_temperature; remove this line
 
-  // Use OR'ed bitflags, not enum sets
-  traits.set_supported_modes(
-      climate::CLIMATE_MODE_OFF | climate::CLIMATE_MODE_HEAT |
-      (supports_cool_ ? climate::CLIMATE_MODE_COOL : 0));
+  // Use set for supported modes
+  std::set<climate::ClimateMode> modes = {
+    climate::ClimateMode::CLIMATE_MODE_OFF,
+    climate::ClimateMode::CLIMATE_MODE_HEAT
+  };
+  if (supports_cool_) {
+    modes.insert(climate::ClimateMode::CLIMATE_MODE_COOL);
+  }
+  traits.set_supported_modes(std::move(modes));
 
-  traits.min_temperature = 16.0f;
-  traits.max_temperature = 30.0f;
-  traits.precision = 0.5f;
+  // Use setters for visual temp ranges and precision
+  traits.set_visual_min_temperature(16.0f);
+  traits.set_visual_max_temperature(30.0f);
+  traits.set_visual_precision(0.5f);
 
   return traits;
 }
