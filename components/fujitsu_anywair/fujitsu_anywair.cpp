@@ -16,31 +16,33 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   std::vector<uint8_t> command_buffer;
 
   // Power
-  if (call.get_action() == climate::CLIMATE_ACTION_OFF) {
+  auto mode_opt = call.get_mode();
+  if (!mode_opt || mode_opt.value() == climate::CLIMATE_MODE_OFF) {
     command_buffer.push_back(static_cast<uint8_t>(Power::Off));
   } else {
     command_buffer.push_back(static_cast<uint8_t>(Power::On));
   }
 
   // Mode
-  climate::ClimateMode mode = call.get_mode().value_or(climate::CLIMATE_MODE_OFF);
   Mode fujitsu_mode = Mode::Auto;
-  switch(mode) {
-    case climate::CLIMATE_MODE_COOL:
-      fujitsu_mode = Mode::Cool;
-      break;
-    case climate::CLIMATE_MODE_DRY:
-      fujitsu_mode = Mode::Dry;
-      break;
-    case climate::CLIMATE_MODE_FAN_ONLY:
-      fujitsu_mode = Mode::Fan;
-      break;
-    case climate::CLIMATE_MODE_HEAT:
-      fujitsu_mode = Mode::Heat;
-      break;
-    default:
-      fujitsu_mode = Mode::Auto;
-      break;
+  if (mode_opt) {
+    switch(mode_opt.value()) {
+      case climate::CLIMATE_MODE_COOL:
+        fujitsu_mode = Mode::Cool;
+        break;
+      case climate::CLIMATE_MODE_DRY:
+        fujitsu_mode = Mode::Dry;
+        break;
+      case climate::CLIMATE_MODE_FAN_ONLY:
+        fujitsu_mode = Mode::Fan;
+        break;
+      case climate::CLIMATE_MODE_HEAT:
+        fujitsu_mode = Mode::Heat;
+        break;
+      default:
+        fujitsu_mode = Mode::Auto;
+        break;
+    }
   }
   command_buffer.push_back(static_cast<uint8_t>(fujitsu_mode));
 
