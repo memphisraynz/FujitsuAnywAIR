@@ -1,5 +1,5 @@
 #include "fujitsu_anywair.h"
-#include "esphome/components/climate/climate_traits.h"
+#include "esphome/components/climate/climate.h"
 
 static const char *TAG = "fujitsu_anywair.climate";
 
@@ -23,18 +23,14 @@ climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_supports_current_temperature(true);
   traits.set_supports_target_temperature(true);
 
-  traits.set_supported_modes({
-    climate::ClimateMode::CLIMATE_MODE_OFF,
-    climate::ClimateMode::CLIMATE_MODE_HEAT
-  });
+  // Use OR'ed bitflags, not enum sets
+  traits.set_supported_modes(
+      climate::CLIMATE_MODE_OFF | climate::CLIMATE_MODE_HEAT |
+      (supports_cool_ ? climate::CLIMATE_MODE_COOL : 0));
 
-  if(supports_cool_) {
-    traits.add_supported_mode(climate::ClimateMode::CLIMATE_MODE_COOL);
-  }
-
-  traits.set_visual_min_temperature(16.0f);
-  traits.set_visual_max_temperature(30.0f);
-  traits.set_visual_precision(0.5f);
+  traits.min_temperature = 16.0f;
+  traits.max_temperature = 30.0f;
+  traits.precision = 0.5f;
 
   return traits;
 }
