@@ -13,22 +13,92 @@ void FujitsuAnywAIRClimate::setup() {
 void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   ESP_LOGD(TAG, "Received control command");
 
-  // Here, you will build the command bytes depending on the requested climate settings.
-  // This is a placeholder example. You will need to map climate::ClimateCall data
-  // to the Fujitsu protocol bytes.
-  std::vector<uint8_t> command = {0x00, 0x00, 0x00};  // Replace with actual command bytes
+  std::vector<uint8_t> command_buffer;
 
-  if (this->send_command(command)) {
-    ESP_LOGD(TAG, "Command sent successfully");
+  // Power
+  if (call.get_action() == climate::CLIMATE_ACTION_OFF) {
+    command_buffer.push_back(static_cast<uint8_t>(Power::Off));
   } else {
+    command_buffer.push_back(static_cast<uint8_t>(Power::On));
+  }
+
+  // Mode
+  climate::ClimateMode mode = call.get_mode().value_or(climate::CLIMATE_MODE_OFF);
+  Mode fujitsu_mode = Mode::Auto;
+  switch(mode) {
+    case climate::CLIMATE_MODE_COOL:
+      fujitsu_mode = Mode::Cool;
+      break;
+    case climate::CLIMATE_MODE_DRY:
+      fujitsu_mode = Mode::Dry;
+      break;
+    case climate::CLIMATE_MODE_FAN_ONLY:
+      fujitsu_mode = Mode::Fan;
+      break;
+    case climate::CLIMATE_MODE_HEAT:
+      fujitsu_mode = Mode::Heat;
+      break;
+    default:
+      fujitsu_mode = Mode::Auto;
+      break;
+  }
+  command_buffer.push_back(static_cast<uint8_t>(fujitsu_mode));
+
+  // Target temperature
+  if (call.get_target_temperature()) {
+    command_buffer.push_back(clamp_temperature(*call.get_target_temperature()));
+  } else {
+    command_buffer.push_back(0);  // Or default
+  }
+
+  // Fan speed
+  climate::ClimateFanMode fan = call.get_fan_mode().value_or(climate::CLIMATE_FAN_AUTO);
+  FanSpeed fujitsu_fan = FanSpeed::Auto;
+  switch(fan) {
+    case climate::CLIMATE_FAN_LOW:
+      fujitsu_fan = FanSpeed::Low;
+      break;
+    case climate::CLIMATE_FAN_MEDIUM:
+      fujitsu_fan = FanSpeed::Medium;
+      break;
+    case climate::CLIMATE_FAN_HIGH:
+      fujitsu_fan = FanSpeed::High;
+      break;
+    case climate::CLIMATE_FAN_AUTO:
+    default:
+      fujitsu_fan = FanSpeed::Auto;
+      break;
+  }
+  command_buffer.push_back(static_cast<uint8_t>(fujitsu_fan));
+
+  // Vertical airflow / swing - example uses VerticalAirflow enums
+  // Here, you can map swing/position from climate extras or presets if you have them
+  VerticalAirflow vertical_flow = VerticalAirflow::Position1;  // default
+  // Example: map swing mode flag on/off
+  if (call.get_swing_mode() == climate::CLIMATE_SWING_VERTICAL) {
+    vertical_flow = VerticalAirflow::Swing;
+  }
+  command_buffer.push_back(static_cast<uint8_t>(vertical_flow));
+
+  // Horizontal airflow / swing - similar mapping
+  HorizontalAirflow horizontal_flow = HorizontalAirflow::Position1;  // default
+  // Example: map swing mode flag on/off
+  if (call.get_swing_mode() == climate::CLIMATE_SWING_HORIZONTAL) {
+    horizontal_flow = HorizontalAirflow::Swing;
+  }
+  command_buffer.push_back(static_cast<uint8_t>(horizontal_flow));
+
+  // Add additional flags (powerful, economy_mode, etc.) if desired using similar pattern
+
+  ESP_LOGD(TAG, "Sending command buffer:");
+  for (auto b : command_buffer) {
+    ESP_LOGD(TAG, " 0x%02X", b);
+  }
+
+  // Send the command buffer over UART
+  if (!this->send_command(command_buffer)) {
     ESP_LOGE(TAG, "Failed to send command");
   }
-  
-  // Optionally read response and handle status updates
-  // std::vector<uint8_t> response;
-  // if (this->read_response(response)) {
-  //   ESP_LOGD(TAG, "Response received");
-  // }
 }
 
 climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
@@ -36,14 +106,15 @@ climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_supports_current_temperature(true);
 
   std::set<climate::ClimateMode> modes = {
-      climate::ClimateMode::CLIMATE_MODE_OFF,
-      climate::ClimateMode::CLIMATE_MODE_HEAT,
+      climate::CLIMATE_MODE_OFF,
+      climate::CLIMATE_MODE_HEAT,
   };
-  if (supports_cool_) {
-    modes.insert(climate::ClimateMode::CLIMATE_MODE_COOL);
-  }
-  traits.set_supported_modes(std::move(modes));
 
+  if (supports_cool_) {
+    modes.insert(climate::CLIMATE_MODE_COOL);
+  }
+
+  traits.set_supported_modes(std::move(modes));
   traits.set_visual_min_temperature(16.0f);
   traits.set_visual_max_temperature(30.0f);
   traits.set_visual_temperature_step(1.0f);
