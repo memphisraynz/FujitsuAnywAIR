@@ -35,9 +35,9 @@ climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_supported_modes(std::move(modes));
 
   // Use setters for visual temp ranges and precision
-  traits.set_visual_min_temperature(16.0f);
-  traits.set_visual_max_temperature(30.0f);
-  traits.set_visual_precision(0.5f);
+  traits.set_visual_min_temperature(16c);
+  traits.set_visual_max_temperature(30c);
+  traits.set_visual_temperature_step(1c);
 
   return traits;
 }
