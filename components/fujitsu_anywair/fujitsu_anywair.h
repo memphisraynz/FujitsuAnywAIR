@@ -4,6 +4,7 @@
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/uart/uart.h"
 #include "enums.h"
+#include <vector>
 
 namespace esphome {
 namespace fujitsu_anywair {
