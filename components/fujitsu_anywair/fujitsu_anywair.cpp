@@ -62,8 +62,8 @@ void FujitsuAnywAIRClimate::write_bytes(const uint8_t* data, size_t length) {
 
 int FujitsuAnywAIRClimate::read_bytes(uint8_t* buffer, size_t length, int timeout_ms) {
   int read = 0;
-  uint32_t start = esp_log_uptime_millis();  // uptime in ms since boot
-  while (read < static_cast<int>(length) && (esp_log_uptime_millis() - start) < static_cast<uint32_t>(timeout_ms)) {
+  uint32_t start = millis();  // uptime in ms since boot
+  while (read < static_cast<int>(length) && (millis() - start) < static_cast<uint32_t>(timeout_ms)) {
     if (uart_->available()) {
       uint8_t b;
       if (uart_->read_byte(&b)) {   // read_byte takes pointer and returns bool success
