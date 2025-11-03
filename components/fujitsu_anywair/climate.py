@@ -42,11 +42,11 @@ ALLOWED_CLIMATE_SWING_MODES = {
 }
 
 CUSTOM_FAN_MODES = {
-    "AUTO": Capabilities.AUTO,
-    "LOW": Capabilities.LOW,
-    "MEDIUM": Capabilities.MEDIUM,
-    "HIGH": Capabilities.HIGH,
-    "QUIET": Capabilities.QUIET,
+    "AUTO": "AUTO",
+    "LOW": "LOW",
+    "MEDIUM": "MEDIUM",
+    "HIGH": "HIGH",
+    "QUIET": "QUIET",
 }
 
 validate_modes = cv.enum(ALLOWED_CLIMATE_MODES, upper=True)
@@ -86,7 +86,7 @@ async def to_code(config):
     if CONF_SUPPORTED_PRESETS in config:
         cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
     if CONF_CUSTOM_FAN_MODES in config:
-        fan_modes_str = [str(mode).split('.')[-1] if not isinstance(mode, str) else mode for mode in config[CONF_CUSTOM_FAN_MODES]]
+        fan_modes_str = [CUSTOM_FAN_MODES[mode] for mode in config[CONF_CUSTOM_FAN_MODES]]
         cg.add(var.set_custom_fan_modes(fan_modes_str))
 
     uart_ = await cg.get_variable(config[CONF_UART_ID])
