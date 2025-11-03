@@ -70,7 +70,6 @@ CONFIG_SCHEMA = cv.All(
             ),
         }
     )
-    
     .extend(uart.UART_DEVICE_SCHEMA)
     .extend(cv.COMPONENT_SCHEMA)
 )
