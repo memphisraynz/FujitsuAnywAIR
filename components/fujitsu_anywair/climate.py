@@ -9,7 +9,7 @@ from esphome.const import (
     CONF_SUPPORTED_MODES,
     CONF_SUPPORTED_PRESETS,
     CONF_SUPPORTED_SWING_MODES,
-    CONF_SUPPORTED_FAN_MODES,
+    CONF_CUSTOM_FAN_MODES,
 )
 from esphome.core import coroutine
 
@@ -19,6 +19,7 @@ AUTO_LOAD = ["uart"]
 
 fujitsu_anywair_ns = cg.esphome_ns.namespace("fujitsu_anywair")
 FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component, uart.UARTDevice)
+Capabilities = fujitsu_anywair_ns.namespace("Constants")
 
 ALLOWED_CLIMATE_MODES = {
     "HEAT_COOL": ClimateMode.CLIMATE_MODE_HEAT_COOL,
@@ -40,9 +41,18 @@ ALLOWED_CLIMATE_SWING_MODES = {
     "HORIZONTAL": ClimateSwingMode.CLIMATE_SWING_HORIZONTAL,
 }
 
+CUSTOM_FAN_MODES = {
+    "AUTO": Capabilities.AUTO,
+    "LOW": Capabilities.LOW,
+    "MEDIUM": Capabilities.MEDIUM,
+    "HIGH": Capabilities.HIGH,
+    "QUIET": Capabilities.QUIET,
+}
+
 validate_modes = cv.enum(ALLOWED_CLIMATE_MODES, upper=True)
 validate_presets = cv.enum(ALLOWED_CLIMATE_PRESETS, upper=True)
 validate_swing_modes = cv.enum(ALLOWED_CLIMATE_SWING_MODES, upper=True)
+validate_custom_fan_modes = cv.enum(CUSTOM_FAN_MODES, upper=True)
 
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)
@@ -55,9 +65,12 @@ CONFIG_SCHEMA = cv.All(
                 validate_swing_modes
             ),
             cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
-
+            cv.Optional(CONF_CUSTOM_FAN_MODES): cv.ensure_list(
+                validate_custom_fan_modes
+            ),
         }
     )
+    
     .extend(uart.UART_DEVICE_SCHEMA)
     .extend(cv.COMPONENT_SCHEMA)
 )
@@ -75,6 +88,8 @@ async def to_code(config):
         cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
     if CONF_SUPPORTED_FAN_MODES in config:
         cg.add(var.set_supported_fan_modes(config[CONF_SUPPORTED_FAN_MODES]))
+    if CONF_CUSTOM_FAN_MODES in config:
+        cg.add(var.set_custom_fan_modes(config[CONF_CUSTOM_FAN_MODES]))
 
     uart_ = await cg.get_variable(config[CONF_UART_ID])
     cg.add(var.set_uart(uart_))
