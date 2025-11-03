@@ -44,7 +44,7 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   std::set<ClimateMode> supported_modes_;
   std::set<ClimatePreset> supported_presets_;
   std::set<ClimateSwingMode> supported_swing_modes_;
-  std::vector<std::string> supported_custom_fan_modes_;
+  std::vector<std::string> supported_custom_fan_modes_{};
 
   // Current parsed states
   ClimateMode mode_{ClimateMode::CLIMATE_MODE_OFF};
