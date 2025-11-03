@@ -12,6 +12,7 @@ from esphome.const import (
     CONF_SUPPORTED_PRESETS,
     CONF_SUPPORTED_SWING_MODES,
     CONF_CUSTOM_FAN_MODES,
+    CONF_CUSTOM_PRESETS,
 )
 from esphome.core import coroutine
 
