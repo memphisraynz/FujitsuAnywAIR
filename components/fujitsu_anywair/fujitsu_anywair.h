@@ -11,31 +11,47 @@
 namespace esphome {
 namespace fujitsu_anywair {
 
+using climate::ClimateCall;
+using climate::ClimateMode;
+using climate::ClimatePreset;
+using climate::ClimateSwingMode;
+using climate::ClimateFanMode;
+using climate::ClimateTraits;
+
+// Forward declaration for sensors if needed
+class Sensor;
+
 class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, public Component {
  public:
   void dump_config() override;
   void setup() override;
   void loop() override;
-  void control(const climate::ClimateCall &call) override;
+  void control(const ClimateCall &call) override;
   ClimateTraits traits() override;
 
-  void set_supported_modes(const std::vector<climate::ClimateMode> &modes);
-  void set_supported_presets(const std::vector<climate::ClimatePreset> &presets);
-  void set_supported_swing_modes(const std::vector<climate::ClimateSwingMode> &modes);
+  // Setters for supported modes and custom presets/fan modes
+  void set_supported_modes(const std::vector<ClimateMode> &modes);
+  void set_supported_presets(const std::vector<ClimatePreset> &presets);
+  void set_supported_swing_modes(const std::vector<ClimateSwingMode> &swing_modes);
   void set_custom_fan_modes(const std::vector<std::string> &fan_modes);
+
+  void set_uart(uart::UARTComponent *uart) { this->uart_ = uart; }
 
  protected:
   uart::UARTComponent *uart_{nullptr};
 
+  // Store supported modes, presets, swing modes in sets for traits
   std::set<ClimateMode> supported_modes_;
   std::set<ClimatePreset> supported_presets_;
   std::set<ClimateSwingMode> supported_swing_modes_;
-  std::vector<std::string> supported_custom_fan_modes_; // for custom fan modes
+  std::vector<std::string> supported_custom_fan_modes_{};
 
+  // Current parsed states
   ClimateMode mode_{ClimateMode::CLIMATE_MODE_OFF};
-  climate::ClimateFanMode fan_mode_{climate::CLIMATE_FAN_AUTO};
+  ClimateFanMode fan_mode_{climate::CLIMATE_FAN_AUTO};
   float current_temperature_{0.0f};
 
+  // Parsing and communication helpers
   bool validate_message(const uint8_t *buf, size_t len);
   void parse_message(const uint8_t *buf, size_t len);
 
