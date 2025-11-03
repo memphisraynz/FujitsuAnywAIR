@@ -19,7 +19,6 @@ AUTO_LOAD = ["uart"]
 
 fujitsu_anywair_ns = cg.esphome_ns.namespace("fujitsu_anywair")
 FujitsuAnywAIRClimate = fujitsu_anywair_ns.class_("FujitsuAnywAIRClimate", climate.Climate, cg.Component, uart.UARTDevice)
-Capabilities = fujitsu_anywair_ns.namespace("Constants")
 
 ALLOWED_CLIMATE_MODES = {
     "HEAT_COOL": ClimateMode.CLIMATE_MODE_HEAT_COOL,
