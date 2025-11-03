@@ -198,7 +198,6 @@ ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_supported_modes(supported_modes_);
   traits.set_supported_presets(supported_presets_);
   traits.set_supported_swing_modes(supported_swing_modes_);
-  traits.set_supported_fan_modes(supported_fan_modes_);
 
   traits.set_visual_min_temperature(16.0f);
   traits.set_visual_max_temperature(30.0f);
