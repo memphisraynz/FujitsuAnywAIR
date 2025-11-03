@@ -1,5 +1,9 @@
 #pragma once
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "esphome.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/uart/uart.h"
@@ -9,13 +13,12 @@ namespace fujitsu_anywair {
 
 using climate::ClimateCall;
 using climate::ClimateMode;
-using climate::ClimateModeMask;
 using climate::ClimatePreset;
-using climate::ClimatePresetMask;
-using climate::ClimateSwingModeMask;
+using climate::ClimateSwingMode;
+using climate::ClimateFanMode;
 using climate::ClimateTraits;
 
-// Forward declaration for sensor class if needed
+// Forward declaration for sensors if needed
 class Sensor;
 
 class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, public Component {
@@ -26,35 +29,35 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   void control(const ClimateCall &call) override;
   ClimateTraits traits() override;
 
-  // Setters
-  void set_supported_modes(ClimateModeMask modes) { supported_modes_ = modes; }
-  void set_supported_presets(ClimatePresetMask presets) { supported_presets_ = presets; }
-  void set_supported_swing_modes(ClimateSwingModeMask modes) { supported_swing_modes_ = modes; }
-  void set_custom_presets(const std::vector<std::string> &presets) { supported_custom_presets_ = presets; }
-  void set_custom_fan_modes(const std::vector<std::string> &modes) { supported_custom_fan_modes_ = modes; }
+  // Setters for supported modes and custom presets/fan modes
+  void set_supported_modes(const std::vector<ClimateMode> &modes);
+  void set_supported_presets(const std::vector<ClimatePreset> &presets);
+  void set_supported_swing_modes(const std::vector<ClimateSwingMode> &swing_modes);
+  void set_custom_presets(const std::vector<std::string> &presets);
+  void set_custom_fan_modes(const std::vector<std::string> &fan_modes);
 
   void set_uart(uart::UARTComponent *uart) { this->uart_ = uart; }
 
  protected:
-  // Internal state members
-  ClimateModeMask supported_modes_{};
-  ClimatePresetMask supported_presets_{};
-  ClimateSwingModeMask supported_swing_modes_{};
-  std::vector<std::string> supported_custom_presets_{};
-  std::vector<std::string> supported_custom_fan_modes_{};
-
   uart::UARTComponent *uart_{nullptr};
 
-  // Parsed state variables
+  // Store supported modes, presets, swing modes in sets for traits
+  std::set<ClimateMode> supported_modes_;
+  std::set<ClimatePreset> supported_presets_;
+  std::set<ClimateSwingMode> supported_swing_modes_;
+
+  std::vector<std::string> supported_custom_presets_;
+  std::vector<std::string> supported_custom_fan_modes_;
+
+  // Current parsed states
   ClimateMode mode_{ClimateMode::CLIMATE_MODE_OFF};
   ClimateFanMode fan_mode_{climate::CLIMATE_FAN_AUTO};
   float current_temperature_{0.0f};
 
-  // Parsing methods for incoming UART data
+  // Parsing and communication helpers
   bool validate_message(const uint8_t *buf, size_t len);
   void parse_message(const uint8_t *buf, size_t len);
 
-  // UART communication helpers
   void write_bytes(const uint8_t* data, size_t length);
   int read_bytes(uint8_t* buffer, size_t length, int timeout_ms);
   bool send_command(const std::vector<uint8_t> &command);
