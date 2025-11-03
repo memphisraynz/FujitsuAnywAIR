@@ -44,18 +44,18 @@ static uint8_t clamp_temperature(float temp) {
 }
 
 void FujitsuAnywAIRClimate::set_supported_modes(const std::vector<ClimateMode> &modes) {
-  this->supported_modes_.clear();
-  this->supported_modes_.insert(modes.begin(), modes.end());
+  supported_modes_.clear();
+  supported_modes_.insert(modes.begin(), modes.end());
 }
 
 void FujitsuAnywAIRClimate::set_supported_swing_modes(const std::vector<ClimateSwingMode> &modes) {
-  this->supported_swing_modes_.clear();
-  this->supported_swing_modes_.insert(modes.begin(), modes.end());
+  supported_swing_modes_.clear();
+  supported_swing_modes_.insert(modes.begin(), modes.end());
 }
 
 void FujitsuAnywAIRClimate::set_supported_presets(const std::vector<ClimatePreset> &presets) {
-  this->supported_presets_.clear();
-  this->supported_presets_.insert(presets.begin(), presets.end());
+  supported_presets_.clear();
+  supported_presets_.insert(presets.begin(), presets.end());
 }
 
 void FujitsuAnywAIRClimate::set_custom_fan_modes(const std::vector<std::string> &fan_modes) {

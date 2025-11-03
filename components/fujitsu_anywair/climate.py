@@ -86,8 +86,8 @@ async def to_code(config):
     if CONF_SUPPORTED_PRESETS in config:
         cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
     if CONF_CUSTOM_FAN_MODES in config:
-        fan_modes = [str(x).split('.')[-1] if not isinstance(x, str) else x for x in config[CONF_CUSTOM_FAN_MODES]]
-        cg.add(var.set_custom_fan_modes(fan_modes))
+        fan_modes_str = [str(mode).split('.')[-1] if not isinstance(mode, str) else mode for mode in config[CONF_CUSTOM_FAN_MODES]]
+        cg.add(var.set_custom_fan_modes(fan_modes_str))
 
     uart_ = await cg.get_variable(config[CONF_UART_ID])
     cg.add(var.set_uart(uart_))
