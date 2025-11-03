@@ -8,6 +8,35 @@ static constexpr size_t kExpectedMsgLength = 20;
 namespace esphome {
 namespace fujitsu_anywair {
 
+// Helper conversions between ESPHome fan mode and your Fujitsu FanSpeed enum
+FanSpeed to_fujitsu_fan_speed(climate::ClimateFanMode fan_mode) {
+  switch (fan_mode) {
+    case climate::CLIMATE_FAN_LOW:
+      return FanSpeed::Low;
+    case climate::CLIMATE_FAN_MEDIUM:
+      return FanSpeed::Medium;
+    case climate::CLIMATE_FAN_HIGH:
+      return FanSpeed::High;
+    case climate::CLIMATE_FAN_AUTO:
+    default:
+      return FanSpeed::Auto;
+  }
+}
+
+climate::ClimateFanMode from_fujitsu_fan_speed(FanSpeed speed) {
+  switch (speed) {
+    case FanSpeed::Low:
+      return climate::CLIMATE_FAN_LOW;
+    case FanSpeed::Medium:
+      return climate::CLIMATE_FAN_MEDIUM;
+    case FanSpeed::High:
+      return climate::CLIMATE_FAN_HIGH;
+    case FanSpeed::Auto:
+    default:
+      return climate::CLIMATE_FAN_AUTO;
+  }
+}
+
 static uint8_t clamp_temperature(float temp) {
   if (temp < 16.0f) return 16;
   if (temp > 30.0f) return 30;
@@ -39,7 +68,7 @@ void FujitsuAnywAIRClimate::set_custom_fan_modes(const std::vector<std::string> 
 
 void FujitsuAnywAIRClimate::dump_config() {
   ESP_LOGCONFIG(TAG, "Fujitsu AnywAIR Climate:");
-  // Optionally log supported modes, presets etc.
+  // Optionally log supported modes, presets, guitars etc.
 }
 
 void FujitsuAnywAIRClimate::setup() {
@@ -81,7 +110,6 @@ bool FujitsuAnywAIRClimate::validate_message(const uint8_t *buf, size_t len) {
 }
 
 void FujitsuAnywAIRClimate::parse_message(const uint8_t *buf, size_t len) {
-  // Map your protocol buffer bytes into class members.
   uint8_t mode_byte = buf[7];
   switch (mode_byte) {
     case 0x01: mode_ = climate::CLIMATE_MODE_COOL; break;
@@ -93,14 +121,8 @@ void FujitsuAnywAIRClimate::parse_message(const uint8_t *buf, size_t len) {
 
   current_temperature_ = static_cast<float>(buf[6]);
 
-  uint8_t fan_byte = buf[8];
-  switch (fan_byte) {
-    case 0x00: fan_mode_ = climate::CLIMATE_FAN_AUTO; break;
-    case 0x01: fan_mode_ = climate::CLIMATE_FAN_LOW; break;
-    case 0x02: fan_mode_ = climate::CLIMATE_FAN_MEDIUM; break;
-    case 0x03: fan_mode_ = climate::CLIMATE_FAN_HIGH; break;
-    default: fan_mode_ = climate::CLIMATE_FAN_AUTO; break;
-  }
+  FanSpeed fan_speed = static_cast<FanSpeed>(buf[8]);
+  fan_mode_ = from_fujitsu_fan_speed(fan_speed);
 }
 
 void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
@@ -147,23 +169,7 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   }
 
   // Fan speed
-  climate::ClimateFanMode fan = call.get_fan_mode().value_or(climate::CLIMATE_FAN_AUTO);
-  FanSpeed fujitsu_fan = FanSpeed::Auto;
-  switch(fan) {
-    case climate::CLIMATE_FAN_LOW:
-      fujitsu_fan = FanSpeed::Low;
-      break;
-    case climate::CLIMATE_FAN_MEDIUM:
-      fujitsu_fan = FanSpeed::Medium;
-      break;
-    case climate::CLIMATE_FAN_HIGH:
-      fujitsu_fan = FanSpeed::High;
-      break;
-    case climate::CLIMATE_FAN_AUTO:
-    default:
-      fujitsu_fan = FanSpeed::Auto;
-      break;
-  }
+  FanSpeed fujitsu_fan = to_fujitsu_fan_speed(call.get_fan_mode().value_or(climate::CLIMATE_FAN_AUTO));
   command_buffer.push_back(static_cast<uint8_t>(fujitsu_fan));
 
   // Vertical airflow / swing
@@ -197,9 +203,6 @@ ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_supported_presets(supported_presets_);
   traits.set_supported_swing_modes(supported_swing_modes_);
 
-  // ESPHome ClimateTraits currently does not support set_custom_presets or set_custom_fan_modes,
-  // you may handle those separately if needed.
-
   traits.set_visual_min_temperature(16.0f);
   traits.set_visual_max_temperature(30.0f);
   traits.set_visual_temperature_step(1.0f);
@@ -216,7 +219,7 @@ void FujitsuAnywAIRClimate::write_bytes(const uint8_t* data, size_t length) {
 
 int FujitsuAnywAIRClimate::read_bytes(uint8_t* buffer, size_t length, int timeout_ms) {
   int read = 0;
-  uint32_t start = millis();  // uptime in ms
+  uint32_t start = millis();
   while (read < static_cast<int>(length) && (millis() - start) < static_cast<uint32_t>(timeout_ms)) {
     if (uart_->available()) {
       uint8_t b;
@@ -230,7 +233,6 @@ int FujitsuAnywAIRClimate::read_bytes(uint8_t* buffer, size_t length, int timeou
 
 bool FujitsuAnywAIRClimate::send_command(const std::vector<uint8_t> &command) {
   write_bytes(command.data(), command.size());
-  // Optionally add error checking or await response
   return true;
 }
 
