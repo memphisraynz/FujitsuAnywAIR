@@ -2,7 +2,6 @@
 #include "esphome/core/log.h"
 
 static const char *TAG = "fujitsu_anywair.climate";
-static constexpr size_t kExpectedMsgLength = 20;
 
 namespace esphome {
 namespace fujitsu_anywair {
@@ -13,28 +12,30 @@ static uint8_t clamp_temperature(float temp) {
   return static_cast<uint8_t>(temp);
 }
 
+void FujitsuAnywAIRClimate::dump_config() {
+  ESP_LOGCONFIG("fujitsu_anywair", "Fujitsu AnywAIR Climate:");
+  // Log supported modes, presets, etc.
+}
+
 void FujitsuAnywAIRClimate::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up Fujitsu AC Climate component");
+  ESP_LOGCONFIG("fujitsu_anywair", "Setting up Fujitsu AnywAIR");
 }
 
 void FujitsuAnywAIRClimate::loop() {
+  static constexpr size_t kExpectedMsgLength = 20;
   static uint8_t buffer[kExpectedMsgLength];
   static size_t buffer_pos = 0;
 
-  while (uart_->available() && buffer_pos < kExpectedMsgLength) {
+  while (uart_ && uart_->available() && buffer_pos < kExpectedMsgLength) {
     uint8_t byte;
     if (!uart_->read_byte(&byte)) {
-      ESP_LOGE(TAG, "UART read error");
       break;
     }
     buffer[buffer_pos++] = byte;
-
     if (buffer_pos == kExpectedMsgLength) {
       if (validate_message(buffer, buffer_pos)) {
         parse_message(buffer, buffer_pos);
         publish_state();
-      } else {
-        ESP_LOGW(TAG, "Invalid message");
       }
       buffer_pos = 0;
     }
@@ -174,20 +175,15 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   }
 }
 
-climate::ClimateTraits FujitsuAnywAIRClimate::traits() {
-  auto traits = climate::ClimateTraits();
-  traits.set_supports_current_temperature(true);
+ClimateTraits FujitsuAnywAIRClimate::traits() {
+  auto traits = ClimateTraits();
 
-  std::set<climate::ClimateMode> modes = {
-      climate::CLIMATE_MODE_OFF,
-      climate::CLIMATE_MODE_HEAT,
-  };
+  traits.set_supported_modes(supported_modes_);
+  traits.set_supported_presets(supported_presets_);
+  traits.set_supported_swing_modes(supported_swing_modes_);
+  traits.set_custom_presets(supported_custom_presets_);
+  traits.set_custom_fan_modes(supported_custom_fan_modes_);
 
-  if (supports_cool_) {
-    modes.insert(climate::CLIMATE_MODE_COOL);
-  }
-
-  traits.set_supported_modes(std::move(modes));
   traits.set_visual_min_temperature(16.0f);
   traits.set_visual_max_temperature(30.0f);
   traits.set_visual_temperature_step(1.0f);
