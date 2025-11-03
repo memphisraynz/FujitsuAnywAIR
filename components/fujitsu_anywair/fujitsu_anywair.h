@@ -30,10 +30,10 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   ClimateTraits traits() override;
 
   // Setters for supported modes and custom presets/fan modes
-  void set_supported_modes(const std::vector<climate::ClimateMode> &modes);
-  void set_supported_swing_modes(const std::vector<climate::ClimateSwingMode> &modes);
-  void set_supported_presets(const std::vector<climate::ClimatePreset> &presets);
-  void set_custom_fan_modes(const std::vector<std::string> &fan_modes);
+  void set_supported_modes(const std::vector<ClimateMode> &modes);
+  void set_supported_swing_modes(const std::vector<ClimateSwingMode> &modes);
+  void set_supported_presets(const std::vector<ClimatePreset> &presets);
+  void set_custom_fan_modes(const std::vector<std::string> &modes);
 
   void set_uart(uart::UARTComponent *uart) { this->uart_ = uart; }
 

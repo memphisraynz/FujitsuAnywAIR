@@ -59,8 +59,7 @@ void FujitsuAnywAIRClimate::set_supported_presets(const std::vector<ClimatePrese
 }
 
 void FujitsuAnywAIRClimate::set_custom_fan_modes(const std::vector<std::string> &fan_modes) {
-  this->supported_custom_fan_modes_.clear();
-  this->supported_presets_.insert(fan_modes.begin(), fan_modes.end());
+  supported_custom_fan_modes_ = fan_modes;
 }
 
 void FujitsuAnywAIRClimate::dump_config() {
