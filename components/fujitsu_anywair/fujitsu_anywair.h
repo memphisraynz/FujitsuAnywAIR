@@ -33,8 +33,7 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   void set_supported_modes(const std::vector<ClimateMode> &modes);
   void set_supported_presets(const std::vector<ClimatePreset> &presets);
   void set_supported_swing_modes(const std::vector<ClimateSwingMode> &swing_modes);
-  void set_custom_presets(const std::vector<std::string> &presets);
-  void set_custom_fan_modes(const std::vector<std::string> &fan_modes);
+  void set_supported_fan_modes(const std::vector<climate::ClimateFanMode> &modes);
 
   void set_uart(uart::UARTComponent *uart) { this->uart_ = uart; }
 
@@ -45,6 +44,7 @@ class FujitsuAnywAIRClimate : public climate::Climate, public uart::UARTDevice, 
   std::set<ClimateMode> supported_modes_;
   std::set<ClimatePreset> supported_presets_;
   std::set<ClimateSwingMode> supported_swing_modes_;
+  std::set<climate::ClimateFanMode> supported_fan_modes_;
 
   std::vector<std::string> supported_custom_presets_;
   std::vector<std::string> supported_custom_fan_modes_;
