@@ -43,17 +43,17 @@ static uint8_t clamp_temperature(float temp) {
   return static_cast<uint8_t>(temp);
 }
 
-void FujitsuAnywAIRClimate::set_supported_modes(const std::vector<climate::ClimateMode> &modes) {
+void FujitsuAnywAIRClimate::set_supported_modes(const std::vector<ClimateMode> &modes) {
   supported_modes_.clear();
   supported_modes_.insert(modes.begin(), modes.end());
 }
 
-void FujitsuAnywAIRClimate::set_supported_presets(const std::vector<climate::ClimatePreset> &presets) {
+void FujitsuAnywAIRClimate::set_supported_presets(const std::vector<ClimatePreset> &presets) {
   supported_presets_.clear();
   supported_presets_.insert(presets.begin(), presets.end());
 }
 
-void FujitsuAnywAIRClimate::set_supported_swing_modes(const std::vector<climate::ClimateSwingMode> &modes) {
+void FujitsuAnywAIRClimate::set_supported_swing_modes(const std::vector<ClimateSwingMode> &modes) {
   supported_swing_modes_.clear();
   supported_swing_modes_.insert(modes.begin(), modes.end());
 }
@@ -194,7 +194,6 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
 
 ClimateTraits FujitsuAnywAIRClimate::traits() {
   auto traits = ClimateTraits();
-
   traits.set_supported_modes(supported_modes_);
   traits.set_supported_presets(supported_presets_);
   traits.set_supported_swing_modes(supported_swing_modes_);
