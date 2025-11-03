@@ -9,8 +9,6 @@ from esphome.const import (
     CONF_SUPPORTED_MODES,
     CONF_SUPPORTED_PRESETS,
     CONF_SUPPORTED_SWING_MODES,
-    CONF_CUSTOM_FAN_MODES,
-    CONF_CUSTOM_PRESETS,
 )
 from esphome.core import coroutine
 
@@ -32,8 +30,8 @@ ALLOWED_CLIMATE_MODES = {
 
 ALLOWED_CLIMATE_PRESETS = {
     "ECO": ClimatePreset.CLIMATE_PRESET_ECO,
-    "BOOST": ClimatePreset.CLIMATE_PRESET_BOOST,
-    "SLEEP": ClimatePreset.CLIMATE_PRESET_SLEEP,
+    "POWER": ClimatePreset.CLIMATE_PRESET_BOOST,
+    "ENERGY": ClimatePreset.CLIMATE_PRESET_ENERGY,
 }
 
 ALLOWED_CLIMATE_SWING_MODES = {
@@ -42,20 +40,9 @@ ALLOWED_CLIMATE_SWING_MODES = {
     "HORIZONTAL": ClimateSwingMode.CLIMATE_SWING_HORIZONTAL,
 }
 
-CUSTOM_FAN_MODES = {
-    "SILENT": Capabilities.SILENT,
-    "TURBO": Capabilities.TURBO,
-}
-
-CUSTOM_PRESETS = {
-    "FREEZE_PROTECTION": Capabilities.FREEZE_PROTECTION,
-}
-
 validate_modes = cv.enum(ALLOWED_CLIMATE_MODES, upper=True)
 validate_presets = cv.enum(ALLOWED_CLIMATE_PRESETS, upper=True)
 validate_swing_modes = cv.enum(ALLOWED_CLIMATE_SWING_MODES, upper=True)
-validate_custom_fan_modes = cv.enum(CUSTOM_FAN_MODES, upper=True)
-validate_custom_presets = cv.enum(CUSTOM_PRESETS, upper=True)
 
 CONFIG_SCHEMA = cv.All(
     climate.climate_schema(FujitsuAnywAIRClimate)
@@ -68,9 +55,7 @@ CONFIG_SCHEMA = cv.All(
                 validate_swing_modes
             ),
             cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
-            cv.Optional(CONF_CUSTOM_FAN_MODES): cv.ensure_list(
-                validate_custom_fan_modes
-            ),
+
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -88,10 +73,6 @@ async def to_code(config):
         cg.add(var.set_supported_swing_modes(config[CONF_SUPPORTED_SWING_MODES]))
     if CONF_SUPPORTED_PRESETS in config:
         cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
-    if CONF_CUSTOM_PRESETS in config:
-        cg.add(var.set_custom_presets(config[CONF_CUSTOM_PRESETS]))
-    if CONF_CUSTOM_FAN_MODES in config:
-        cg.add(var.set_custom_fan_modes(config[CONF_CUSTOM_FAN_MODES]))
 
     uart_ = await cg.get_variable(config[CONF_UART_ID])
     cg.add(var.set_uart(uart_))
