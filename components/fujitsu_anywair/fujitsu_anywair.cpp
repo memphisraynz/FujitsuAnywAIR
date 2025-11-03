@@ -14,6 +14,29 @@ static uint8_t clamp_temperature(float temp) {
   return static_cast<uint8_t>(temp);
 }
 
+void FujitsuAnywAIRClimate::set_supported_modes(const std::vector<climate::ClimateMode> &modes) {
+  supported_modes_.clear();
+  supported_modes_.insert(modes.begin(), modes.end());
+}
+
+void FujitsuAnywAIRClimate::set_supported_presets(const std::vector<climate::ClimatePreset> &presets) {
+  supported_presets_.clear();
+  supported_presets_.insert(presets.begin(), presets.end());
+}
+
+void FujitsuAnywAIRClimate::set_supported_swing_modes(const std::vector<climate::ClimateSwingMode> &modes) {
+  supported_swing_modes_.clear();
+  supported_swing_modes_.insert(modes.begin(), modes.end());
+}
+
+void FujitsuAnywAIRClimate::set_custom_presets(const std::vector<std::string> &presets) {
+  supported_custom_presets_ = presets;
+}
+
+void FujitsuAnywAIRClimate::set_custom_fan_modes(const std::vector<std::string> &modes) {
+  supported_custom_fan_modes_ = modes;
+}
+
 void FujitsuAnywAIRClimate::dump_config() {
   ESP_LOGCONFIG(TAG, "Fujitsu AnywAIR Climate:");
   // Optionally log supported modes, presets etc.
