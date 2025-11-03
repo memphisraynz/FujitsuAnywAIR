@@ -70,7 +70,6 @@ CONFIG_SCHEMA = cv.All(
                 validate_swing_modes
             ),
             cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
-            cv.Optional(CONF_CUSTOM_PRESETS): cv.ensure_list(validate_custom_presets),
             cv.Optional(CONF_CUSTOM_FAN_MODES): cv.ensure_list(
                 validate_custom_fan_modes
             ),
