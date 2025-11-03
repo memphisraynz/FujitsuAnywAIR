@@ -1,10 +1,7 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
-
-from esphome.components import (
-    climate,
-    uart
-)
+from esphome.components import climate, uart
+from esphome.components.climate import ClimateMode, ClimatePreset, ClimateSwingMode
 from esphome.const import (
     CONF_ID,
     CONF_NAME,
