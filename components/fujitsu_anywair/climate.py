@@ -6,8 +6,6 @@ from esphome.const import (
     CONF_ID,
     CONF_NAME,
     CONF_UART_ID,
-    CONF_SUPPORTS_COOL,
-    CONF_SUPPORTS_HEAT,
     CONF_SUPPORTED_MODES,
     CONF_SUPPORTED_PRESETS,
     CONF_SUPPORTED_SWING_MODES,
@@ -65,8 +63,6 @@ CONFIG_SCHEMA = cv.All(
     .extend(
         {
             cv.GenerateID(): cv.declare_id(FujitsuAnywAIRClimate),
-            cv.Optional(CONF_SUPPORTS_COOL, default=True): cv.boolean,
-            cv.Optional(CONF_SUPPORTS_HEAT, default=True): cv.boolean,
             cv.Optional(CONF_SUPPORTED_MODES): cv.ensure_list(validate_modes),
             cv.Optional(CONF_SUPPORTED_SWING_MODES): cv.ensure_list(
                 validate_swing_modes
@@ -86,8 +82,6 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
 
-    cg.add(var.set_supports_cool(config[CONF_SUPPORTS_COOL]))
-    cg.add(var.set_supports_heat(config[CONF_SUPPORTS_HEAT]))
     if CONF_SUPPORTED_MODES in config:
         cg.add(var.set_supported_modes(config[CONF_SUPPORTED_MODES]))
     if CONF_SUPPORTED_SWING_MODES in config:
