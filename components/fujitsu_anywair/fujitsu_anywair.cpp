@@ -37,6 +37,28 @@ climate::ClimateFanMode from_fujitsu_fan_speed(FanSpeed speed) {
   }
 }
 
+// Helper to convert custom fan mode string to FanSpeed enum
+FanSpeed custom_fan_mode_to_fujitsu(const std::string &mode) {
+  if (mode == "AUTO") return FanSpeed::Auto;
+  if (mode == "QUIET") return FanSpeed::Quiet;
+  if (mode == "LOW") return FanSpeed::Low;
+  if (mode == "MEDIUM") return FanSpeed::Medium;
+  if (mode == "HIGH") return FanSpeed::High;
+  return FanSpeed::Auto; // default
+}
+
+// Helper to convert FanSpeed enum to custom fan mode string
+std::string fujitsu_to_custom_fan_mode(FanSpeed speed) {
+  switch (speed) {
+    case FanSpeed::Auto: return "AUTO";
+    case FanSpeed::Quiet: return "QUIET";
+    case FanSpeed::Low: return "LOW";
+    case FanSpeed::Medium: return "MEDIUM";
+    case FanSpeed::High: return "HIGH";
+    default: return "AUTO";
+  }
+}
+
 static uint8_t clamp_temperature(float temp) {
   if (temp < 16.0f) return 16;
   if (temp > 30.0f) return 30;
@@ -65,7 +87,7 @@ void FujitsuAnywAIRClimate::set_custom_fan_modes(const std::vector<std::string> 
 
 void FujitsuAnywAIRClimate::dump_config() {
   ESP_LOGCONFIG(TAG, "Fujitsu AnywAIR Climate:");
-  // Optionally log supported modes, presets, guitars etc.
+  // Optionally log supported modes, presets, etc.
 }
 
 void FujitsuAnywAIRClimate::setup() {
@@ -120,6 +142,9 @@ void FujitsuAnywAIRClimate::parse_message(const uint8_t *buf, size_t len) {
 
   FanSpeed fan_speed = static_cast<FanSpeed>(buf[8]);
   fan_mode_ = from_fujitsu_fan_speed(fan_speed);
+  
+  // Also update custom fan mode string
+  this->custom_fan_mode = fujitsu_to_custom_fan_mode(fan_speed);
 }
 
 void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
@@ -127,7 +152,7 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
 
   std::vector<uint8_t> command_buffer;
 
-  // Power
+  // 1. Power
   auto mode_opt = call.get_mode();
   if (!mode_opt || mode_opt.value() == climate::CLIMATE_MODE_OFF) {
     command_buffer.push_back(static_cast<uint8_t>(Power::Off));
@@ -135,7 +160,7 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
     command_buffer.push_back(static_cast<uint8_t>(Power::On));
   }
 
-  // Mode
+  // 2. Mode
   Mode fujitsu_mode = Mode::Auto;
   if (mode_opt) {
     switch (mode_opt.value()) {
@@ -158,34 +183,85 @@ void FujitsuAnywAIRClimate::control(const climate::ClimateCall &call) {
   }
   command_buffer.push_back(static_cast<uint8_t>(fujitsu_mode));
 
-  // Target temperature
+  // 3. Target temperature
   if (call.get_target_temperature()) {
     command_buffer.push_back(clamp_temperature(*call.get_target_temperature()));
   } else {
     command_buffer.push_back(0);
   }
 
-  // Fan speed
-  FanSpeed fujitsu_fan = to_fujitsu_fan_speed(call.get_fan_mode().value_or(climate::CLIMATE_FAN_AUTO));
+  // 4. Fan speed - Handle custom fan modes
+  FanSpeed fujitsu_fan = FanSpeed::Auto;
+  
+  if (call.get_custom_fan_mode().has_value()) {
+    // User selected from custom fan modes dropdown (includes QUIET)
+    fujitsu_fan = custom_fan_mode_to_fujitsu(call.get_custom_fan_mode().value());
+    ESP_LOGD(TAG, "Custom fan mode: %s -> 0x%04X", call.get_custom_fan_mode().value().c_str(), 
+             static_cast<uint16_t>(fujitsu_fan));
+  } else if (call.get_fan_mode().has_value()) {
+    // Fallback to standard fan mode
+    fujitsu_fan = to_fujitsu_fan_speed(call.get_fan_mode().value());
+  }
+  
   command_buffer.push_back(static_cast<uint8_t>(fujitsu_fan));
 
-  // Vertical airflow / swing
+  // 5. Vertical airflow / swing
   VerticalAirflow vertical_flow = VerticalAirflow::Position1;
-  if (call.get_swing_mode() == climate::CLIMATE_SWING_VERTICAL) {
-    vertical_flow = VerticalAirflow::Swing;
+  auto swing_mode = call.get_swing_mode();
+  if (swing_mode.has_value()) {
+    if (swing_mode.value() == climate::CLIMATE_SWING_VERTICAL || 
+        swing_mode.value() == climate::CLIMATE_SWING_BOTH) {
+      vertical_flow = VerticalAirflow::Swing;
+    }
   }
   command_buffer.push_back(static_cast<uint8_t>(vertical_flow));
 
-  // Horizontal airflow / swing
+  // 6. Horizontal airflow / swing
   HorizontalAirflow horizontal_flow = HorizontalAirflow::Position1;
-  if (call.get_swing_mode() == climate::CLIMATE_SWING_HORIZONTAL) {
-    horizontal_flow = HorizontalAirflow::Swing;
+  if (swing_mode.has_value()) {
+    if (swing_mode.value() == climate::CLIMATE_SWING_HORIZONTAL || 
+        swing_mode.value() == climate::CLIMATE_SWING_BOTH) {
+      horizontal_flow = HorizontalAirflow::Swing;
+    }
   }
   command_buffer.push_back(static_cast<uint8_t>(horizontal_flow));
 
+  // 7. Handle presets (Powerful, Economy, etc.)
+  auto preset = call.get_preset();
+  if (preset.has_value()) {
+    switch (preset.value()) {
+      case climate::CLIMATE_PRESET_BOOST:
+        // Enable Powerful mode
+        command_buffer.push_back(static_cast<uint8_t>(Powerful::On));
+        break;
+      case climate::CLIMATE_PRESET_ECO:
+        // Enable Economy mode
+        command_buffer.push_back(static_cast<uint8_t>(EconomyMode::On));
+        break;
+      case climate::CLIMATE_PRESET_SLEEP:
+        // Enable Energy Saving Fan
+        command_buffer.push_back(static_cast<uint8_t>(EnergySavingFan::On));
+        break;
+      default:
+        // No preset - add default off values
+        command_buffer.push_back(static_cast<uint8_t>(Powerful::Off));
+        break;
+    }
+  } else {
+    // No preset selected
+    command_buffer.push_back(static_cast<uint8_t>(Powerful::Off));
+  }
+
+  // 8. Calculate and append checksum
+  uint8_t checksum = 0;
+  for (auto byte : command_buffer) {
+    checksum += byte;
+  }
+  command_buffer.push_back(checksum);
+
   ESP_LOGD(TAG, "Sending command buffer:");
-  for (auto b : command_buffer) {
-    ESP_LOGD(TAG, " 0x%02X", b);
+  for (size_t i = 0; i < command_buffer.size(); i++) {
+    ESP_LOGD(TAG, "  [%d] 0x%02X", i, command_buffer[i]);
   }
 
   if (!send_command(command_buffer)) {
@@ -202,6 +278,7 @@ ClimateTraits FujitsuAnywAIRClimate::traits() {
   traits.set_visual_min_temperature(16.0f);
   traits.set_visual_max_temperature(30.0f);
   traits.set_visual_temperature_step(1.0f);
+  traits.set_supports_current_temperature(true);
 
   return traits;
 }
